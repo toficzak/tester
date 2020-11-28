@@ -6,17 +6,50 @@
 	<artifactId>tester</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
+	<name>${project.groupId}:${project.artifactId}</name>
+	<description>Backbone for e2e testing projects.</description>
+	<url>https://github.com/toficzak/tester</url>
+
+	<licenses>
+		<license>
+			<name>MIT License</name>
+			<url>http://www.opensource.org/licenses/mit-license.php</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Krzysztof</name>
+			<email>toficzak+tester@gmail.com</email>
+			<url>https://github.com/toficzak</url>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:git://github.com/toficzak/tester.git</connection>
+		<developerConnection>scm:git:ssh://github.com/toficzak/tester.git</developerConnection>
+		<url>http://github.com/toficzak/tester.git/tree/master</url>
+	</scm>
+
 	<properties>
-		<maven.compiler.target>1.8</maven.compiler.target>
-		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+		<maven.compiler.source>11</maven.compiler.source>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-	
+
+
+	<repositories>
+		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
+		</repository>
+	</repositories>
+
 	<dependencies>
 		<dependency>
-			<groupId>krzysztof</groupId>
+			<groupId>com.github.toficzak</groupId>
 			<artifactId>db.connector</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 	</dependencies>
 </project>
