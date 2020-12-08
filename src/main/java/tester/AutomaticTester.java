@@ -213,7 +213,8 @@ public class AutomaticTester {
 
     System.out.println();
     System.out.println(String.format("%s: Ended e2e tests.", LocalDateTime.now()));
-    System.out.println(String.format("> tests: %d", overallMethods));
+    System.out.println(
+        String.format("> tests: %d", overallPassed + overallFailed + overallIgnoredMethods));
     System.out.println(String.format("> passed: %d", overallPassed));
     System.out.println(String.format("> failed: %d", overallFailed));
     System.out.println(String.format("> ignored: %d", overallIgnoredMethods));
