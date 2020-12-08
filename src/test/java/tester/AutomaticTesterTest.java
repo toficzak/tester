@@ -8,6 +8,8 @@ class AutomaticTesterTest {
   void test() {
     AutomaticTester tester = new AutomaticTester();
     tester.runAllScenarios();
+
+    new AutomaticTester().runTestMethod(SimpleTest.class, "test3");
   }
 
 }
