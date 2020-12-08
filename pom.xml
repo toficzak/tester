@@ -46,7 +46,7 @@
 	</repositories>
 
 	<dependencies>
-	<dependency>
+		<dependency>
 			<groupId>com.github.toficzak</groupId>
 			<artifactId>property.reader</artifactId>
 			<version>1.0.1</version>
@@ -60,6 +60,13 @@
 			<groupId>org.reflections</groupId>
 			<artifactId>reflections</artifactId>
 			<version>0.9.12</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>5.7.0</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>
