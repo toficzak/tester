@@ -46,10 +46,20 @@
 	</repositories>
 
 	<dependencies>
+	<dependency>
+			<groupId>com.github.toficzak</groupId>
+			<artifactId>property.reader</artifactId>
+			<version>1.0.1</version>
+		</dependency>
 		<dependency>
 			<groupId>com.github.toficzak</groupId>
 			<artifactId>db.connector</artifactId>
 			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.reflections</groupId>
+			<artifactId>reflections</artifactId>
+			<version>0.9.12</version>
 		</dependency>
 	</dependencies>
 </project>

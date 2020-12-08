@@ -5,84 +5,128 @@ import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import org.reflections.Reflections;
 import krzysztof.db.connector.DatabaseCleaner;
+import krzysztof.property.reader.PropertyReader;
+import tester.annotation.Scenario;
+import tester.annotation.Scenarios;
+import tester.helper.SessionCleaner;
 
 public class AutomaticTester {
 
   private List<Class<?>> testClasses = new ArrayList<>();
 
   private DatabaseCleaner databaseCleaner;
+  private SessionCleaner sessionCleaner;
+  private final String scanRootPackage;
+
+  private int overallPassed = 0;
+  private int overallFailed = 0;
+  private int overallIgnoredMethods = 0;
+  private int overallMethods = 0;
+
+
+  public AutomaticTester() {
+    PropertyReader propertyReader =
+        new PropertyReader("config.properties", this.getClass().getClassLoader());
+    scanRootPackage = propertyReader.getProperty("scan.root.package");
+  }
 
   public void addDatabaseCleaner(DatabaseCleaner cleaner) {
     this.databaseCleaner = cleaner;
   }
 
-  public void addTestClass(Class<?> testClass) {
-    this.testClasses.add(testClass);
+  public void addSessionCleaner(SessionCleaner cleaner) {
+    this.sessionCleaner = cleaner;
   }
 
-  public void testAll() {
+  public void test(Class<?> clazz) {
+    Method[] methods = clazz.getMethods();
 
-    System.out.println(String.format("%s: Launching e2e tests.", LocalDateTime.now()));
+    List<Method> testMethods = new ArrayList<>();
 
-    int overallMethods = 0;
-    int overallPassed = 0;
-    int overallFailed = 0;
-
-    for (Class<?> clazz : testClasses) {
-      Method[] methods = clazz.getMethods();
-
-      List<Method> testMethods = new ArrayList<>();
-      for (Method m : methods) {
-        if (m.isAnnotationPresent(Scenario.class)) {
-          testMethods.add(m);
-          overallMethods++;
-        }
+    for (Method m : methods) {
+      if (m.isAnnotationPresent(Scenario.class)) {
+        testMethods.add(m);
       }
-      System.out.println("");
-      System.out.println(String.format("Launching %s [%d test%s]", clazz.getSimpleName(),
-          testMethods.size(), testMethods.size() > 1 ? "s" : ""));
+    }
+    System.out.println("");
+    System.out.println(String.format("Launching %s [%d test%s]", clazz.getSimpleName(),
+        testMethods.size(), testMethods.size() > 1 ? "s" : ""));
 
-      int passed = 0;
-      int failed = 0;
+    int passed = 0;
+    int failed = 0;
+    int ignored = 0;
 
-      Object initializedTestClass = null;
+    Object initializedTestClass = null;
+    try {
+      initializedTestClass = clazz.newInstance();
+    } catch (InstantiationException | IllegalAccessException e1) {
+      e1.printStackTrace();
+    }
+
+    overallMethods = testMethods.size();
+
+    for (Method testMethod : testMethods) {
       try {
-        initializedTestClass = clazz.newInstance();
-      } catch (InstantiationException | IllegalAccessException e1) {
-        // TODO Auto-generated catch block
-        e1.printStackTrace();
-      }
-
-      for (Method testMethod : testMethods) {
-        try {
-          System.out.print(String.format("-> %s...", testMethod.getName()));
-          testMethod.invoke(initializedTestClass);
-          System.out.println(" passed.");
-          passed++;
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-          System.out.println(" failed.");
-          e.printStackTrace();
-          failed++;
-        } finally {
+        if (!testMethod.getAnnotation(Scenario.class).ignore().isEmpty()) {
+          ignored++;
+          System.out.println(
+              String.format("-x %s... ignored. Reason: %s.",
+                  testMethod.getName(),
+                  testMethod.getAnnotation(Scenario.class).ignore()));
+          continue;
+        }
+        System.out.print(String.format("-> %s... ", testMethod.getName()));
+        testMethod.invoke(initializedTestClass);
+        System.out.println("passed.");
+        passed++;
+      } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        System.out.println("failed.");
+        e.printStackTrace();
+        failed++;
+      } finally {
+        if (this.sessionCleaner != null) {
+          sessionCleaner.clear();
+        }
+        if (this.databaseCleaner != null) {
           databaseCleaner.clean();
         }
       }
+    }
 
-      System.out.println("--------------------");
-      System.out.println(String.format("%s results:", clazz.getSimpleName()));
-      System.out.println(String.format("> tests: %d", testMethods.size()));
-      System.out.println(String.format("> passed: %d", passed));
-      System.out.println(String.format("> failed: %d", failed));
-      if (!testMethods.isEmpty()) {
-        System.out.println(String.format("> overall: %d/%d (%s%%)", passed, failed,
-            (float) passed / testMethods.size() * 100f));
-      }
+    System.out.println("--------------------");
+    System.out.println(String.format("%s results:", clazz.getSimpleName()));
+    System.out.println(String.format("> tests: %d", testMethods.size()));
+    System.out.println(String.format("> passed: %d", passed));
+    System.out.println(String.format("> failed: %d", failed));
+    System.out.println(String.format("> ignored: %d", ignored));
+    if (!testMethods.isEmpty()) {
+      System.out.println(String.format("> overall: %d/%d (%s%%)", passed, failed,
+          (float) passed / (passed + failed) * 100f));
+    }
 
-      overallPassed += passed;
-      overallFailed += failed;
+    overallPassed += passed;
+    overallFailed += failed;
+    overallIgnoredMethods += ignored;
 
-      System.out.println("####################");
+    System.out.println("####################");
+  }
+
+  public void runAllScenarios() {
+
+    Set<Class<?>> scenarios = new Reflections(scanRootPackage)
+        .getTypesAnnotatedWith(Scenarios.class);
+
+    for (Class<?> scenario : scenarios) {
+      this.testClasses.add(scenario);
+    }
+
+    System.out.println(String.format("%s: Launching e2e tests.", LocalDateTime.now()));
+
+    for (Class<?> clazz : testClasses) {
+      this.test(clazz);
     }
 
     System.out.println();
@@ -90,9 +134,10 @@ public class AutomaticTester {
     System.out.println(String.format("> tests: %d", overallMethods));
     System.out.println(String.format("> passed: %d", overallPassed));
     System.out.println(String.format("> failed: %d", overallFailed));
-    if (overallMethods > 0) {
+    System.out.println(String.format("> ignored: %d", overallIgnoredMethods));
+    if (overallMethods - overallIgnoredMethods > 0) {
       System.out.println(String.format("> overall: %d/%d (%s%%)", overallPassed, overallFailed,
-          (float) overallPassed / overallMethods * 100f));
+          (float) overallPassed / (overallPassed + overallFailed) * 100f));
     }
   }
 
