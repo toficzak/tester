@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.reflections.Reflections;
-import krzysztof.db.connector.DatabaseCleaner;
 import krzysztof.property.reader.PropertyReader;
 import tester.annotation.Scenario;
 import tester.annotation.Scenarios;
+import tester.helper.DatabaseCleaner;
 import tester.helper.SessionCleaner;
 
 public class AutomaticTester {
